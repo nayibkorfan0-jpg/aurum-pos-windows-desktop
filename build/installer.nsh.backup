@@ -1,0 +1,234 @@
+; 1SOLUTION Car Wash POS - Windows Installer Script
+; Custom NSIS script for installer enhancements
+
+!include "MUI2.nsh"
+!include "FileFunc.nsh"
+
+; Installer customization
+!define PRODUCT_NAME "1SOLUTION Car Wash POS"
+!define PRODUCT_VERSION "1.0.0"
+!define PRODUCT_PUBLISHER "1SOLUTION"
+!define PRODUCT_WEB_SITE "https://1solution.dev"
+!define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\1solution-carwash-pos.exe"
+!define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
+!define PRODUCT_UNINST_ROOT_KEY "HKLM"
+
+; Visual appearance
+!define MUI_ABORTWARNING
+!define MUI_ICON "${NSISDIR}\Contrib\Graphics\Icons\modern-install.ico"
+!define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
+
+; Welcome page
+!insertmacro MUI_PAGE_WELCOME
+
+; License page
+!insertmacro MUI_PAGE_LICENSE "LICENSE.txt"
+
+; Directory page
+!insertmacro MUI_PAGE_DIRECTORY
+
+; Components page
+!insertmacro MUI_PAGE_COMPONENTS
+
+; Install files page
+!insertmacro MUI_PAGE_INSTFILES
+
+; Finish page
+!define MUI_FINISHPAGE_RUN "$INSTDIR\1solution-carwash-pos.exe"
+!define MUI_FINISHPAGE_SHOWREADME "$INSTDIR\README.md"
+!insertmacro MUI_PAGE_FINISH
+
+; Uninstaller pages
+!insertmacro MUI_UNPAGE_INSTFILES
+
+; Language files
+!insertmacro MUI_LANGUAGE "Spanish"
+!insertmacro MUI_LANGUAGE "English"
+
+; Installer sections
+Section "Programa Principal" SEC01
+  SectionIn RO
+  
+  ; Install main application files
+  SetOutPath "$INSTDIR"
+  SetOverwrite ifnewer
+  
+  ; Create application directories
+  CreateDirectory "$INSTDIR\data"
+  CreateDirectory "$INSTDIR\logs"
+  CreateDirectory "$INSTDIR\backups"
+  
+  ; Set permissions for data directory
+  AccessControl::GrantOnFile "$INSTDIR\data" "(BU)" "FullAccess"
+  AccessControl::GrantOnFile "$INSTDIR\logs" "(BU)" "FullAccess"
+  AccessControl::GrantOnFile "$INSTDIR\backups" "(BU)" "FullAccess"
+  
+  ; Create shortcuts
+  CreateDirectory "$SMPROGRAMS\1SOLUTION"
+  CreateShortCut "$SMPROGRAMS\1SOLUTION\Car Wash POS.lnk" "$INSTDIR\1solution-carwash-pos.exe"
+  CreateShortCut "$SMPROGRAMS\1SOLUTION\Desinstalar.lnk" "$INSTDIR\uninst.exe"
+  CreateShortCut "$DESKTOP\Car Wash POS.lnk" "$INSTDIR\1solution-carwash-pos.exe"
+  
+  ; Create quick launch shortcut
+  CreateShortCut "$QUICKLAUNCH\Car Wash POS.lnk" "$INSTDIR\1solution-carwash-pos.exe"
+SectionEnd
+
+Section "Microsoft Visual C++ Runtime" SEC02
+  ; Check if Visual C++ Runtime is needed
+  DetailPrint "Verificando Microsoft Visual C++ Runtime..."
+  
+  ; Install VC++ redistributable if needed
+  File /oname=$TEMP\vcredist_x64.exe "vcredist_x64.exe"
+  ExecWait '"$TEMP\vcredist_x64.exe" /quiet /norestart' $0
+  Delete "$TEMP\vcredist_x64.exe"
+  
+  ${If} $0 != 0
+    DetailPrint "Visual C++ Runtime ya está instalado o la instalación falló."
+  ${Else}
+    DetailPrint "Visual C++ Runtime instalado correctamente."
+  ${EndIf}
+SectionEnd
+
+Section "Configuración del Sistema" SEC03
+  ; Configure Windows Firewall exceptions
+  DetailPrint "Configurando excepciones del firewall..."
+  nsExec::ExecToLog 'netsh advfirewall firewall add rule name="1SOLUTION Car Wash POS" dir=in action=allow program="$INSTDIR\1solution-carwash-pos.exe" enable=yes'
+  
+  ; Register file associations
+  WriteRegStr HKCR ".1sp" "" "1SOLUTION.Project"
+  WriteRegStr HKCR "1SOLUTION.Project" "" "1SOLUTION Project File"
+  WriteRegStr HKCR "1SOLUTION.Project\DefaultIcon" "" "$INSTDIR\1solution-carwash-pos.exe,0"
+  WriteRegStr HKCR "1SOLUTION.Project\shell\open\command" "" '"$INSTDIR\1solution-carwash-pos.exe" "%1"'
+  
+  ; Register application paths
+  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "" "$INSTDIR\1solution-carwash-pos.exe"
+  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "Path" "$INSTDIR"
+  
+  ; Register uninstaller
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayName" "$(^Name)"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString" "$INSTDIR\uninst.exe"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\1solution-carwash-pos.exe"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayVersion" "${PRODUCT_VERSION}"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
+  WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
+  
+  ; Estimate install size
+  ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
+  IntFmt $0 "0x%08X" $0
+  WriteRegDWORD ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "EstimatedSize" "$0"
+SectionEnd
+
+; Optional components
+Section /o "Acceso directo en escritorio" SEC04
+  CreateShortCut "$DESKTOP\Car Wash POS.lnk" "$INSTDIR\1solution-carwash-pos.exe"
+SectionEnd
+
+Section /o "Iniciar con Windows" SEC05
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "1SOLUTION Car Wash POS" "$INSTDIR\1solution-carwash-pos.exe --startup"
+SectionEnd
+
+; Descriptions
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC01} "Archivos principales del programa (requerido)"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC02} "Microsoft Visual C++ Runtime (recomendado)"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC03} "Configuración del sistema y asociaciones de archivo"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC04} "Crear acceso directo en el escritorio"
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC05} "Iniciar automáticamente con Windows"
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
+
+; Uninstaller section
+Section Uninstall
+  ; Remove shortcuts
+  Delete "$SMPROGRAMS\1SOLUTION\Car Wash POS.lnk"
+  Delete "$SMPROGRAMS\1SOLUTION\Desinstalar.lnk"
+  Delete "$DESKTOP\Car Wash POS.lnk"
+  Delete "$QUICKLAUNCH\Car Wash POS.lnk"
+  RMDir "$SMPROGRAMS\1SOLUTION"
+  
+  ; Remove firewall rules
+  nsExec::ExecToLog 'netsh advfirewall firewall delete rule name="1SOLUTION Car Wash POS"'
+  
+  ; Remove file associations
+  DeleteRegKey HKCR ".1sp"
+  DeleteRegKey HKCR "1SOLUTION.Project"
+  
+  ; Remove registry entries
+  DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
+  DeleteRegKey HKLM "${PRODUCT_DIR_REGKEY}"
+  DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "1SOLUTION Car Wash POS"
+  
+  ; Remove application directory (but preserve user data)
+  MessageBox MB_YESNO|MB_ICONQUESTION "¿Desea eliminar también los datos de la aplicación (bases de datos, configuraciones, etc.)?" IDNO KeepData
+  RMDir /r "$INSTDIR\data"
+  RMDir /r "$INSTDIR\logs"
+  RMDir /r "$INSTDIR\backups"
+  
+  KeepData:
+  ; Remove application files
+  Delete "$INSTDIR\uninst.exe"
+  RMDir /r "$INSTDIR"
+  
+  SetAutoClose true
+SectionEnd
+
+; Custom functions
+Function .onInit
+  ; Check for existing installation
+  ReadRegStr $R0 ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "UninstallString"
+  StrCmp $R0 "" done
+  
+  MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION \
+  "1SOLUTION Car Wash POS ya está instalado. $\n$\nHaga clic en 'Aceptar' para desinstalar la versión anterior o 'Cancelar' para cancelar esta instalación." \
+  IDOK uninst
+  Abort
+  
+  uninst:
+    ClearErrors
+    ExecWait '$R0 _?=$INSTDIR'
+    
+    IfErrors no_remove_uninstaller done
+      no_remove_uninstaller:
+  
+  done:
+FunctionEnd
+
+Function un.onInit
+  MessageBox MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON2 "¿Está seguro de que desea desinstalar completamente $(^Name) y todos sus componentes?" IDYES +2
+  Abort
+FunctionEnd
+
+Function un.onUninstSuccess
+  HideWindow
+  MessageBox MB_ICONINFORMATION|MB_OK "$(^Name) ha sido desinstalado exitosamente de su computadora."
+FunctionEnd
+
+; Custom page for database backup
+Var BackupCheckbox
+Var BackupCheckboxState
+
+Function BackupPage
+  !insertmacro MUI_HEADER_TEXT "Copia de Seguridad" "Crear copia de seguridad de datos"
+  
+  nsDialogs::Create 1018
+  Pop $0
+  
+  ${NSD_CreateLabel} 0 0 100% 24u "Se recomienda crear una copia de seguridad de sus datos antes de continuar."
+  Pop $0
+  
+  ${NSD_CreateCheckbox} 0 30u 100% 12u "Crear copia de seguridad automáticamente"
+  Pop $BackupCheckbox
+  ${NSD_SetState} $BackupCheckbox ${BST_CHECKED}
+  
+  nsDialogs::Show
+FunctionEnd
+
+Function BackupPageLeave
+  ${NSD_GetState} $BackupCheckbox $BackupCheckboxState
+  
+  ${If} $BackupCheckboxState == ${BST_CHECKED}
+    DetailPrint "Creando copia de seguridad..."
+    CreateDirectory "$INSTDIR\backups\backup-$(TIMESTAMP)"
+    CopyFiles "$INSTDIR\data\*.*" "$INSTDIR\backups\backup-$(TIMESTAMP)\"
+    DetailPrint "Copia de seguridad creada en: $INSTDIR\backups\backup-$(TIMESTAMP)"
+  ${EndIf}
+FunctionEnd

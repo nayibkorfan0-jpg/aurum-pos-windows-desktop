@@ -1,0 +1,81 @@
+# 📤 INSTRUCCIONES PARA SUBIR A GITHUB
+
+## 🎯 Pasos para subir tu código a GitHub:
+
+### 1️⃣ **Abrir terminal/línea de comandos**
+- **Windows**: Presiona Win + R, escribe "cmd" y presiona Enter
+- **Mac/Linux**: Abre Terminal
+
+### 2️⃣ **Navegar a la carpeta extraída**
+```bash
+cd ruta/donde/extrajiste/aurum-pos-source
+```
+
+### 3️⃣ **Configurar git (solo la primera vez)**
+```bash
+git config --global user.name "Tu Nombre"
+git config --global user.email "tu@email.com"
+```
+
+### 4️⃣ **Inicializar repositorio y subir código**
+```bash
+# Inicializar git
+git init
+
+# Conectar con tu repositorio de GitHub
+git remote add origin https://github.com/nayibkorfan0-jpg/aurum-pos.git
+
+# Agregar todos los archivos
+git add .
+
+# Crear commit inicial
+git commit -m "Sistema Aurum POS completo - Punto de venta para lavaderos Paraguay
+
+✨ Características:
+- Sistema POS completo para lavaderos
+- Cumplimiento fiscal Paraguay (RUC, Timbrado)
+- Gestión de clientes y vehículos
+- Órdenes de trabajo y facturación
+- Inventario y reportes
+- Autenticación multi-usuario
+- Dashboard analytics
+- Régimen turismo
+- React + TypeScript + PostgreSQL
+
+🚀 Listo para producción
+🇵🇾 Diseñado para Paraguay"
+
+# Crear rama principal
+git branch -M main
+
+# Subir código a GitHub
+git push -u origin main
+```
+
+### 5️⃣ **¡Listo!** 
+Tu código estará disponible en: **https://github.com/nayibkorfan0-jpg/aurum-pos**
+
+---
+
+## ❓ **Si tienes problemas:**
+
+### **Error de autenticación:**
+GitHub ahora requiere token personal en lugar de contraseña:
+1. Ve a GitHub.com → Settings → Developer settings → Personal access tokens
+2. Genera un nuevo token con permisos de "repo"
+3. Usa el token como contraseña cuando git te lo pida
+
+### **El repositorio ya existe:**
+Si el repositorio ya tiene contenido, usa:
+```bash
+git push -u origin main --force
+```
+
+### **Necesitas ayuda:**
+- 📧 Contacta soporte técnico
+- 💬 Busca "git básico" en Google
+- 📚 Tutorial: https://git-scm.com/docs/gittutorial
+
+---
+
+**✅ Una vez subido, tu sistema Aurum POS estará disponible públicamente en GitHub para cualquier desarrollador.**
